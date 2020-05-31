@@ -5,8 +5,12 @@
 package it.polito.tdp.food;
 
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.food.model.Adiacenza;
+import it.polito.tdp.food.model.Food;
 import it.polito.tdp.food.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -41,7 +45,7 @@ public class FoodController {
     private Button btnSimula; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxFood"
-    private ComboBox<?> boxFood; // Value injected by FXMLLoader
+    private ComboBox<Food> boxFood; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
@@ -49,19 +53,81 @@ public class FoodController {
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
+    	this.boxFood.getItems().clear();
+    	int numeroPorzioni;
+    	try {
+    		numeroPorzioni = Integer.parseInt(txtPorzioni.getText());
+    	}catch(NumberFormatException nfe) {
+    		nfe.printStackTrace();
+    		txtResult.appendText("Devi inserire un numero intero");
+    		throw new RuntimeException("Devi inserire un numero intero");
+
+    	}
+    	this.model.creaGrafo(numeroPorzioni);
+    	if(this.model.getVertici()==0) {
+    		txtResult.appendText("Hai inserito un numero troppo alto. Il grafo non ha vertici!");
+    		return;
+    	}
+    	this.boxFood.getItems().addAll(this.model.getListaVertici(numeroPorzioni));
     	txtResult.appendText("Creazione grafo...");
+    	txtResult.appendText("\n GRAFO CREATO!\n NUMERO VERTICI: "+this.model.getVertici()+"\nNUMERO ARCHI: "+this.model.getArchi()+"\n");
     }
     
     @FXML
     void doCalorie(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Analisi calorie...");
+    	Food cibo = boxFood.getValue();
+    	if(cibo==null) {
+    		txtResult.appendText("Devi selezionare un cibo dal menù a tendina! se è vuoto crea prima il grafo!");
+    		return;
+    	}
+    	List<Adiacenza> risultato = this.model.calorie(cibo);
+    	txtResult.appendText("\nCIBO SELEZIONATO: "+cibo.toString()+"\n");
+    	if(risultato.size()<=5) {
+	    	for(Adiacenza a : risultato) {
+	    		if(a.getF1().equals(cibo)) {
+	    			txtResult.appendText(a.getF2()+", CALORIE CONGIUNTE: "+a.getPeso()+"\n");
+	    		}else {
+	    			txtResult.appendText(a.getF1()+", CALORIE CONGIUNTE: "+a.getPeso()+"\n");
+	
+	    		}
+	    	}
+    	}else {
+	    	for(int i=0; i<5;i++) {
+	    		if(risultato.get(i).getF1().equals(cibo)) {
+	    			txtResult.appendText(risultato.get(i).getF2()+", CALORIE CONGIUNTE: "+risultato.get(i).getPeso()+"\n");
+	    		}else {
+	    			txtResult.appendText(risultato.get(i).getF1()+", CALORIE CONGIUNTE: "+risultato.get(i).getPeso()+"\n");
+	
+	    		}
+	    	}
+    	}
     }
 
     @FXML
     void doSimula(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Simulazione...");
+    	Food cibo = boxFood.getValue();
+    	if(cibo==null) {
+    		txtResult.appendText("Devi selezionare un cibo dal menu a tendina");
+    		return;
+    	}
+    	
+    	int k=0;
+    	try {
+    		k = Integer.parseInt(txtK.getText());
+    	}catch(NumberFormatException nfe) {
+    		nfe.printStackTrace();
+    		txtResult.appendText("k deve essere un numero intero compreso tra 1 e 10");
+    		return;
+    	}
+    	this.model.initSim(k, cibo);
+    	this.model.runSim();
+    	
+    	txtResult.appendText(String.format("Simulazione completata!\n NUMERO CIBI PREPARATI: %d \n DURATA PREPARAZIONE: %f ", this.model.getCibiPreparati(), this.model.getTempo()));
+    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
