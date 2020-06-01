@@ -121,7 +121,7 @@ public class FoodDao {
 			ResultSet rs = st.executeQuery();
 			
 			while(rs.next()) {
-				if(rs.getInt("porzioni")>=numeroPorzioni) {
+				if(rs.getInt("porzioni")==numeroPorzioni) {
 					res.add(idMap.get(rs.getInt("food_code")));
 				}
 			}
